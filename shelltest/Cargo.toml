@@ -5,4 +5,3 @@ authors = ["Bartek Plotka <bwplotka@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-clap = "2.31.2"
