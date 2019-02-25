@@ -1,5 +1,7 @@
 use std::fs::File;
 use std::thread;
+use std::time;
+use std::future;
 use std::process::{Child, Command, Stdio};
 
 pub enum Shell {
@@ -17,8 +19,9 @@ pub struct Suite {
     script: String,
     args: Vec<String>,
 
+    stderr: File,
+    stdout: File,
     child: Option<Child>,
-    handle: thread::JoinHandle<Send + 'static {Builder::new().spawn(f).unwrap() }>,
 }
 
 pub fn new(script: &str) -> Suite {
@@ -36,8 +39,9 @@ pub fn new(script: &str) -> Suite {
         script: String::from(script),
         args: [].to_vec(),
 
+        stderr: File::create("/tmp/something-stderr").expect("failed to create tmp file"),
+        stdout: File::create("/tmp/something-stdout").expect("failed to create tmp file"),
         child: None,
-        handle: thread::JoinHandle,
     }
 }
 
@@ -51,37 +55,30 @@ impl Suite {
     }
 
     fn exec(&mut self) {
-        let handle = thread::spawn(|| {
-            for i in 1..10 {
-                println!("hi number {} from the spawned thread!", i);
-                thread::sleep(Duration::from_millis(1));
-            }
-        });
-        for i in 1..5 {
-            println!("hi number {} from the main thread!", i);
-            thread::sleep(Duration::from_millis(1));
-        }
-        handle.join().unwrap();
-
-
-
-
-
         self.child = Some(Command::new(self.script.clone())
             .args(self.args.clone())
-            .stderr(Stdio::from())
-            .
+            .stderr(Stdio::from(self.stderr))
+            .stdout(Stdio::from(self.stdout))
             .spawn()
             .expect(
                 format!(
                     r#"assertion failed: `cmd {} exec failed`
-    >>"#,
-                    self.script.as_str()
+    >>"#, self.stdout,
                 )
                 .as_str(),
             ));
 
-        self.child.expect("").
+        //future::
+    }
+
+    fn waitUntilIdle(self) -> bool {
+        let mut ln;
+        while self.stderr.metadata().expect("af").len() != ln {
+            ln = self.stderr.metadata().expect("af").len();
+            thread::sleep(time::Duration::from_float_secs(1.0));
+        }
+
+        self.stderr.metadata().expect("af").len() != ln
     }
 }
 

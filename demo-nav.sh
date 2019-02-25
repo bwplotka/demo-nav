@@ -1,26 +1,16 @@
 #!/usr/bin/env bash
 
-# Script inspired by https://github.com/paxtonhare/demo-magic
-# (https://github.com/paxtonhare/demo-magic/issues/15)
-#
-# Example usage in script:
-#  #!/usr/bin/env bash
-#
-#  . demo-lib.sh
-#
-# clear
-#
-# r "ls -l"
-# r "(...)"
-# rc "eval and clean"
-# r "echo \"The end!\" "
-#
-# navigate
+# Source & docs: https://github.com/bwplotka/demo-nav
 
-# the speed to "type" the text
-#TYPE_SPEED=40
-
-# handy color vars for pretty prompts
+# Script options:
+#
+# The speed to "type" the text.
+# TYPE_SPEED=40
+#
+# The speed to "type" the text.
+# IMMEDIATE_REVEAL=true
+#
+# Color vars for pretty prompts.
 BLACK="\033[0;30m"
 YELLOW="\033[1;33m"
 BLUE="\033[0;34m"
@@ -32,77 +22,54 @@ BROWN="\033[0;33m"
 WHITE="\033[1;37m"
 COLOR_RESET="\033[0m"
 
-function check_pv() {
-  command -v pv >/dev/null 2>&1 || {
+# Shortcuts bindings.
+NEXT_KEY=$'\x6E' # n
+PREV_KEY=$'\x70' # p
+BEGIN_KEY=$'\x62' # b
+END_KEY=$'\x65' # e
+QUIT_KEY=$'\x71' # q
+INVOKE_KEY=$'\x0' # enter
 
-    echo ""
-    echo -e "${RED}##############################################################"
-    echo "# HOLD IT!! I require pv but it's not installed.  Aborting." >&2;
-    echo -e "${RED}##############################################################"
-    echo ""
-    echo -e "${COLOR_RESET}Installing pv:"
-    echo ""
-    echo -e "${BLUE}Mac:${COLOR_RESET} $ brew install pv"
-    echo ""
-    echo -e "${BLUE}Other:${COLOR_RESET} http://www.ivarch.com/programs/pv.shtml"
-    echo -e "${COLOR_RESET}"
-    exit 1;
-  }
-}
-
+# Variables.
 PRINT=()
 CMDS=()
 CLEAN_AFTER=()
 
 ##
-# Registers a command for navigate mode.
+# Registers a command into navigable script. Order of registration matters.
 #
-# takes 1 parameter - the string command to run
+# Takes 1 or 2 parameters:
+# 1) The string command to show.
+# 2) Optionally: The string command to run. If empty, parameter 1 is used.
 #
-# usage: r "ls -l"
+# usage:
 #
+#   r "ls -l"
+#   r "list me please" "ls -l"
 ##
 function r() {
-  PRINT+=("$@")
-  CMDS+=("$@")
+  PRINT+=("${1}")
+
+  TO_RUN="${2:-${1}}"
+  CMDS+=("${TO_RUN}")
 
   CLEAN_AFTER+=(false)
 }
 
 ##
-# Registers a command for navigate mode.
-#
-# takes 1 parameter - the string command to run
-#
-# usage: r "ls -l"
-#
+# Same as 'r' but removes the command *AFTER* the execution.
 ##
 function rc() {
-  PRINT+=("$@")
-  CMDS+=("$@")
+  r "$1" "$2"
 
-  CLEAN_AFTER+=(true)
+  CLEAN_AFTER[-1]=true
 }
 
 ##
-# Registers a command for navigate mode, but ran different one without printing it.
+# Runs in a mode that enables easy navigation of the
+# commands in the sequential manner.
 #
-# takes 2 parameter - the string command to be printed and string command to be run.
-#
-# usage: r "ls -l" "echo 'broken'"
-#
-##
-function ro() {
-  PRINT+=("$1")
-  CMDS+=("$2")
-
-  CLEAN_AFTER+=(false)
-}
-
-##
-# Runs in a mode that enables easy navigation of the commands in the sequential manner.
-#
-# TODO: Add search (ctlr+r) functionality
+# TODO(bwplotka): Add search (ctlr+r) functionality
 ##
 function navigate() {
   CONTINUE=${1-false}
@@ -119,7 +86,7 @@ function navigate() {
       curr=0
     fi
     if (( ${curr} >= ${#CMDS[@]} )); then
-      curr=${#CMDS[@]}-1
+      let curr="${#CMDS[@]} - 1"
     fi
 
     print=${PRINT[${curr}]}
@@ -136,29 +103,34 @@ function navigate() {
     fi
     stty echo
 
-    # Ignore accidently buffered input (introduces 0.5 input lag).
+    # Ignore accidentally buffered input (introduces 0.5 input lag).
     read -rst 0.3 -n 10000 discard
 
-    # Is this the command we want to run?
-    read -rs -n1 input
-    case $(printf "%X" \'${input}) in
-    '62') # b - skip this command and move to beginning.
+    # Allow for interactive navigation.
+    read -rsn1 input
+    case "${input}" in
+    ${BEGIN_KEY})
+      # Skip this command and move to beginning.
       curr=0
       echo -en "\033[2K\r"
       ;;
-    '65') # e - skip this command and move to the end.
-      curr=${#CMDS[@]}-1
+    ${END_KEY})
+      # Skip this command and move to the end.
+      let curr="${#CMDS[@]} - 1"
       echo -en "\033[2K\r"
       ;;
-    '6E') # n - skip this command and move to next.
+    ${NEXT_KEY})
+      # Skip this command and move to next.
       ((curr++))
       echo -en "\033[2K\r"
       ;;
-    '70') # p - skip this command and move to previous.
+    ${PREV_KEY})
+      # Skip this command and move to previous.
       ((curr--))
       echo -en "\033[2K\r"
       ;;
-    '0') # enter - eval this and move to next.
+    ${INVOKE_KEY})
+      # enter - Eval this and move to next.
       if ${CLEAN_AFTER[${curr}]}; then
         echo -en "\033[2K\r"
       else
@@ -167,31 +139,35 @@ function navigate() {
       eval "${CMDS[${curr}]}"
       ((curr++))
 
-      # Wait for enter at the end.
+      if [[ -z ${IMMEDIATE_REVEAL} ]]; then
+         # Wait for enter at the end.
       read -rst 0.3 -n 10000 discard
-      read -rs -n1 input
-        case $(printf "%X" \'${input}) in
-        '6E') # n - skip this command and move to next.
+      read -rsn1 input
+        case ${input} in
+        ${NEXT_KEY})
           ((curr++))
           echo -en "\033[2K\r"
           ;;
-        '70') # p - skip this command and move to previous.
+        ${PREV_KEY})
           ((curr--))
           echo -en "\033[2K\r"
           ;;
-        '71') # q
+        ${QUIT_KEY})
           echo ""
           echo "Bye!"
           exit 0
           ;;
         esac
+      fi
       ;;
-    '71') # q
+    ${QUIT_KEY})
+     # q - Quit.
       echo ""
       echo "Bye!"
       exit 0
       ;;
-    *)  # print again - not supported input.
+    *)
+    # Print again, not supported input.
       echo -en "\r"
       ;;
     esac
@@ -199,4 +175,22 @@ function navigate() {
   done
 }
 
-check_pv
+# Internal function for checking pv tool that is used to simulate typing.
+function _check_pv() {
+  command -v pv >/dev/null 2>&1 || {
+    echo ""
+    echo "'pv' tool is required, but it's not installed. Aborting." >&2;
+    echo ""
+    echo -e "${COLOR_RESET}Installing pv:"
+    echo ""
+    echo -e "${BLUE}Mac:${COLOR_RESET} $ brew install pv"
+    echo ""
+    echo -e "${BLUE}Other:${COLOR_RESET} http://www.ivarch.com/programs/pv.shtml"
+    echo -e "${COLOR_RESET}"
+    exit 1;
+  }
+}
+
+if ! [[ -z ${TYPE_SPEED} ]]; then
+    _check_pv
+fi
