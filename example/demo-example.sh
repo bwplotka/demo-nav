@@ -10,7 +10,7 @@ clear
 # `r` registers command to be invoked.
 #
 # First argument specifies what should be printed.
-# Second argument speficies what will be actually executed.
+# Second argument specifies what will be actually executed.
 #
 # NOTE: Use `'` to quote strings inside command.
 r "This will be printed" "echo 'This is executed... Press enter to invoke me. After this is printed, press enter to reveal next command'"

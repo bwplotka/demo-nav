@@ -1,13 +1,11 @@
 # demo-nav
 
-Lightweight shell library for smooth, interactive demos using terminal.
-
 The main goal of this small lib is to enable clear, reproducible, scripted and structured live demo presentations, without sacrificing the *flexibility*. 
 
 Why flexibility matters? It is almost *always* the case that you need to adjust the presentation on the fly, e.g:
 * You did some sequence of commands too fast and you need to retry.
 * In the Q&A someone asks you to explain certain commands in sequence.
-* You are short on time and you want to skip few less important part of demo.
+* You are short on time and you want to skip few less important parts of demo.
 * Something unexpected happen. You want to pause the flow and continue after quick fix.
 
 You can find a video of the live demo I performed using this handy tool at FOSDEM 2019 [here](https://fosdem.org/2019/schedule/event/thanos_transforming_prometheus_to_a_global_scale_in_a_seven_simple_steps/) 
@@ -50,5 +48,3 @@ See [full example demo script with docs](./example/demo-example.sh)
 ## Credits
 
 This was initially inspired by https://github.com/paxtonhare/demo-magic, so kudos to @paxtonhare
-
-[here](https://github.com/paxtonhare/demo-magic/issues/15) my attempt to contribute it back before creating this repo.
