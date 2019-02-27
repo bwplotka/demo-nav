@@ -8,7 +8,7 @@ Why flexibility matters? It is almost *always* the case that you need to adjust 
 * You are short on time and you want to skip few less important parts of demo.
 * Something unexpected happen. You want to pause the flow and continue after quick fix.
 
-You can find a video of the live demo I performed using this handy tool at FOSDEM 2019 [here](https://fosdem.org/2019/schedule/event/thanos_transforming_prometheus_to_a_global_scale_in_a_seven_simple_steps/) 
+You can find a video of the live demos I performed using this handy tool at FOSDEM 2019 [here](https://fosdem.org/2019/schedule/event/thanos_transforming_prometheus_to_a_global_scale_in_a_seven_simple_steps/) & recent GrafanaCon2019 talk [here](https://github.com/improbable-eng/thanos/pull/866)
 
 ## Features:
 
