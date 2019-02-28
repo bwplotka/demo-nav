@@ -2,6 +2,8 @@
 
 The main goal of this small lib is to enable clear, reproducible, scripted and structured live demo presentations, without sacrificing the *flexibility*. 
 
+![Alt Text](./example/example.gif)
+
 Why flexibility matters? It is almost *always* the case that you need to adjust the presentation on the fly, e.g:
 * You did some sequence of commands too fast and you need to retry.
 * In the Q&A someone asks you to explain certain commands in sequence.
