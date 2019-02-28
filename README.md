@@ -38,7 +38,7 @@ to adjust and iterate. Also, natively you run the commands in terminal anyway so
 
 ## How to use it?
 
-* Import `demo-example.sh` in your bash script: `. demo-example.sh`
+* Import `demo-nav.sh` in your bash script: `. demo-nav.sh`
 * Use `r` or `rc` to register commands.
 * Invoke `navigate` at the very end.
 * Run your script. 
