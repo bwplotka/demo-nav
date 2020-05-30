@@ -2,15 +2,16 @@
 
 # Source & docs: https://github.com/bwplotka/demo-nav
 
-# Script options:
+# Script options (define those variables before registering commands):
 #
-# The speed to "type" the text.
+# The speed to "type" the text (Default: 0 so no typing view).
 # TYPE_SPEED=40
 #
-# The speed to "type" the text.
+# If false next command will be shown only after enter (Default: false)
 # IMMEDIATE_REVEAL=true
 #
 # Color vars for pretty prompts.
+# Feel free to use those colors in registered commands.
 BLACK="\033[0;30m"
 YELLOW="\033[1;33m"
 BLUE="\033[0;34m"
@@ -35,6 +36,29 @@ PRINT=()
 CMDS=()
 CLEAN_AFTER=()
 
+# Strip ANSI escape codes/sequences [$1: input string, $2: target variable]
+function strip_escape_codes_and_comments() {
+    local _input="$1" _i _j _token _escape=0
+    local -n _output="$2"; _output=""
+    for (( _i=0; _i < ${#_input}; _i++ )); do
+       if (( ${_escape} == 1 )); then
+            if [[ "${_input:_i:1}" =~ [a-zA-Z] ]]; then
+                _escape=0
+            fi
+            continue
+       fi
+       if [[ "${_input:_i:5}" == "\033[" ]]; then
+            _escape=1
+            continue
+        fi
+
+        if [[ "${_input:_i:1}" == '#' ]]; then
+            break
+        fi
+        _output+="${_input:_i:1}"
+    done
+}
+
 ##
 # Registers a command into navigable script. Order of registration matters.
 #
@@ -51,8 +75,10 @@ function r() {
   PRINT+=("${1}")
 
   TO_RUN="${2:-${1}}"
-  CMDS+=("${TO_RUN}")
 
+  # Sanitize.
+  strip_escape_codes_and_comments "${TO_RUN}" TO_RUN_SANITIZED
+  CMDS+=("${TO_RUN_SANITIZED}")
   CLEAN_AFTER+=(false)
 }
 
