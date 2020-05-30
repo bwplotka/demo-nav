@@ -13,6 +13,9 @@
 # If true prefix line with number; easier to navigate (Default: false).
 # NUMS=true
 #
+# If NUMS = false this prefix will be used (Default: '').
+# PREFIX="CustomPrefix"
+#
 # Color vars for pretty prompts.
 # Feel free to use those colors in registered commands.
 BLACK="\033[0;30m"
@@ -123,7 +126,7 @@ function navigate() {
         print=${CMDS[${curr}]}
     fi
 
-    prefix=""
+    prefix="${PREFIX}"
     if ${NUMS}; then
         prefix="${curr}) "
     fi
