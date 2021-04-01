@@ -7,7 +7,7 @@
 # The speed to "type" the text (Default: 0 so no typing view).
 # TYPE_SPEED=40
 #
-# If false next command will be shown only after enter (Default: false).
+# If empty next command will be shown only after enter (Default: false).
 # IMMEDIATE_REVEAL=true
 #
 # If true prefix line with number; easier to navigate (Default: false).
@@ -204,8 +204,8 @@ function navigate() {
 
       if ${IMMEDIATE_REVEAL}; then
          # Wait for enter at the end.
-      read -rst 0.3 -n 10000 discard
-      read -rsn1 input
+        read -rst 0.3 -n 10000 discard
+        read -rsn1 input
         case ${input} in
         ${NEXT_KEY})
           erase_lines_for_curr ${curr}
@@ -230,8 +230,8 @@ function navigate() {
       exit 0
       ;;
     *)
-    # Print again, not supported input.
-      echo -en "\r"
+    # Not supported input, reprint.
+     erase_lines_for_curr ${curr}
       ;;
     esac
     echo ${curr} > ./.demo-last-step
