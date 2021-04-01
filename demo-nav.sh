@@ -41,6 +41,7 @@ INVOKE_KEY=$'\x0' # enter
 PRINT=()
 CMDS=()
 CLEAN_AFTER=()
+PRINT_BUFFER=""
 
 # Strip ANSI escape codes/sequences [$1: input string, $2: target variable]
 function strip_escape_codes_and_comments() {
@@ -65,8 +66,23 @@ function strip_escape_codes_and_comments() {
     done
 }
 
+# Erase lines from terminal [$1: current command number]
+function erase_lines_for_curr() {
+    local _curr="$1"
+    local _print=${PRINT[${_curr}]}
+    if [[ ${_print} == "" ]]; then
+        _print=${CMDS[${_curr}]}
+    fi
+    # Refer to https://shiroyasha.svbtle.com/escape-sequences-a-quick-guide-1.
+     echo -ne "\033[2K\r"
+    for (( _i=1; _i < $(wc -l <<< "${print}"); _i++ )); do
+      echo -ne "\033[1A\033[2K\r"
+    done
+}
+
 ##
 # Registers a command into navigable script. Order of registration matters.
+# r: register.
 #
 # Takes 1 or 2 parameters:
 # 1) The string command to show.
@@ -78,7 +94,9 @@ function strip_escape_codes_and_comments() {
 #   r "list me please" "ls -l"
 ##
 function r() {
-  PRINT+=("${1}")
+  PRINT_BUFFER+="${1}"
+  PRINT+=("${PRINT_BUFFER}")
+  PRINT_BUFFER=""
 
   TO_RUN="${2:-${1}}"
 
@@ -90,11 +108,20 @@ function r() {
 
 ##
 # Same as 'r' but removes the command *AFTER* the execution.
+# rc: register and clear.
 ##
 function rc() {
   r "$1" "$2"
 
   CLEAN_AFTER[-1]=true
+}
+
+##
+# p: print with next command.
+##
+function p() {
+  PRINT_BUFFER+="${CYAN}${1}${YELLOW}"
+  PRINT_BUFFER+=$'\n'
 }
 
 ##
@@ -147,28 +174,28 @@ function navigate() {
     case "${input}" in
     ${BEGIN_KEY})
       # Skip this command and move to beginning.
+      erase_lines_for_curr ${curr}
       curr=0
-      echo -en "\033[2K\r"
       ;;
     ${END_KEY})
       # Skip this command and move to the end.
+      erase_lines_for_curr ${curr}
       let curr="${#CMDS[@]} - 1"
-      echo -en "\033[2K\r"
       ;;
     ${NEXT_KEY})
       # Skip this command and move to next.
+      erase_lines_for_curr ${curr}
       ((curr++))
-      echo -en "\033[2K\r"
       ;;
     ${PREV_KEY})
       # Skip this command and move to previous.
+      erase_lines_for_curr ${curr}
       ((curr--))
-      echo -en "\033[2K\r"
       ;;
     ${INVOKE_KEY})
       # enter - Eval this and move to next.
       if ${CLEAN_AFTER[${curr}]}; then
-        echo -en "\033[2K\r"
+        erase_lines_for_curr ${curr}
       else
         echo ""
       fi
@@ -181,12 +208,12 @@ function navigate() {
       read -rsn1 input
         case ${input} in
         ${NEXT_KEY})
+          erase_lines_for_curr ${curr}
           ((curr++))
-          echo -en "\033[2K\r"
           ;;
         ${PREV_KEY})
+          erase_lines_for_curr ${curr}
           ((curr--))
-          echo -en "\033[2K\r"
           ;;
         ${QUIT_KEY})
           echo ""
